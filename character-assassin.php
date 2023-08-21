@@ -150,11 +150,22 @@ function tw_ca_footer( $content ) {
 
 	$extra = '';
 	if ( $info ) {
-		$extra = '<div id="character-assassin" style="left:4em;width:50%;background-color:#ccc;opacity:0.5;"><h2>Unescaped strings</h2><ul>';
+		$extra = '<div id="character-assassin" style="position:absolute;left:0;top:6em;width:50%;margin-left:25%;background-color:#ccc;opacity:0.9;"><h2>Character Assassin</h2><h3>Unescaped strings</h3><ul>';
 		foreach ( $info as $key => $data ) {
-			$extra .= '<li><code>' . esc_html( $data['param']  ). '</code> - <code>' . esc_html( $data['frame']['file'] ) . '</code> line ' . esc_html( $data['frame']['line'] ) . '</li>';
+			$extra .= '<li><code>' . esc_html( $data['param'] ) .
+			'</code> - <code>' .
+			esc_html( $data['frame']['file'] ) .
+			'</code> line ' .
+			esc_html( $data['frame']['line'] ) .
+			' in function <code>' .
+			esc_html( $data['frame']['function'] ) .
+			'()</code></li>';
 		}
-		$extra .= '</ul></div>';
+		$extra .= '</ul>';
+		$extra .= '<p>Items identified: ' . count( $tw_heap ) . '<br/>';
+		$extra .= 'Safe items: ' . count( $tw_heap ) - count( $info ) . '<br/>';
+		$extra .= 'Unescaped items: ' . count( $info ) . '</p>';
+		$extra .= '</div>';
 	}
 
 	return $content . $extra;
