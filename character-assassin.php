@@ -1,4 +1,5 @@
 <?php
+namespace CharacterAssassin;
 /*
 Plugin Name: Character Assassin
 Description: A plugin for torture testing WordPress themes. DO NOT USE ON A PRODUCTION SITE.
@@ -6,6 +7,9 @@ Author: Alex Shiels
 Author URI: https://flightpath.blog/
 Version: 0.1
 */
+
+require_once( __DIR__ . '/class-magic-array.php' );
+use CharacterAssassin\MagicArray;
 define( 'TW_CA_BAD_CHARACTERS', '<"\'**CA**"\'>' );
 
 class CharacterAssassin {
@@ -40,7 +44,17 @@ class CharacterAssassin {
 
 		wp_enqueue_style('character-assassin', plugins_url( '/character-assassin.css', __FILE__), array(), '0.1.0', 'all');
 
+		// Need to do this later in order to avoid crashing wp_magic_quotes()
+		add_action( 'sanitize_comment_cookies', array( $this, 'tw_ca_mock_superglobals' ) );
+
 		ob_start( array( $this, 'tw_ca_footer') );
+	}
+
+	function tw_ca_mock_superglobals() {
+		$_GET = new MagicArray( $_GET );
+		$_POST = new MagicArray( $_POST );
+		$_REQUEST = new MagicArray( $_REQUEST );
+		$_COOKIE = new MagicArray( $_COOKIE );
 	}
 
 	/**

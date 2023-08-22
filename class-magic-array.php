@@ -1,9 +1,10 @@
 <?php
+namespace CharacterAssassin;
 
 // Class that implements a magic array to mock $_GET and other superglobals.
 // This essentially implements an object that imitates an array.
 
-class MagicArray implements ArrayAccess {
+class MagicArray implements \ArrayAccess {
 	private $data = [];
 
 	public function __construct( $data ) {
