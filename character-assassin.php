@@ -189,9 +189,7 @@ class CharacterAssassin {
 				'()</code></li>';
 			}
 			$extra .= '</ul></details>';
-			$extra .= '<p>Items identified: ' . count( $this->tw_heap ) . '<br/>';
-			$extra .= 'Safe items: ' . count( $this->tw_heap ) - count( $info ) . '<br/>';
-			$extra .= 'Unescaped items: ' . count( $info ) . '</p>';
+			$extra .= '<p>Found <b>' . count( $info ) . ' unescaped</b> and '. count( $this->tw_heap ) - count( $info ) . ' escaped items.</p>';
 			$extra .= '</div></div>';
 		}
 
