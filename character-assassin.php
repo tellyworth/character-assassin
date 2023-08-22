@@ -154,7 +154,7 @@ class CharacterAssassin {
 
 		$extra = '';
 		if ( $info ) {
-			$extra = '<div id="character-assassin"><h2>Character Assassin</h2>';
+			$extra = '<div id="character-assassin"><div class="content"><h2>Character Assassin</h2>';
 			$extra .= '<details><summary class="button-secondary">Show ' . count( $info ) . ' unescaped strings</summary>';
 			$extra .= '<ul>';
 
@@ -172,7 +172,7 @@ class CharacterAssassin {
 			$extra .= '<p>Items identified: ' . count( $this->tw_heap ) . '<br/>';
 			$extra .= 'Safe items: ' . count( $this->tw_heap ) - count( $info ) . '<br/>';
 			$extra .= 'Unescaped items: ' . count( $info ) . '</p>';
-			$extra .= '</div>';
+			$extra .= '</div></div>';
 		}
 
 		return $content . $extra;

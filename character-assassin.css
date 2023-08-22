@@ -2,15 +2,22 @@
 	position:absolute;
 	left:0;
 	top:6em;width:50%;
-	margin-left:25%;
-	padding: 1em;
-	background-color:#eed;
+	margin: 0 25%;
+	padding: 0;
+	background-image: linear-gradient(45deg, #474747 25%, #ffcc00 25%, #ffcc00 50%, #474747 50%, #474747 75%, #ffcc00 75%, #ffcc00 100%);
+	background-size: 60.00px 60.00px;
 	opacity:0.9;
 	z-index:1000;
 }
 
 #character-assassin:hover {
 	opacity:0.95;
+}
+
+#character-assassin .content {
+	background-color: #eee;
+	margin: 1em;
+	padding: 1em;
 }
 
 details {
