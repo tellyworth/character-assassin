@@ -155,7 +155,7 @@ class CharacterAssassin {
 		$extra = '';
 		if ( $info ) {
 			$extra = '<div id="character-assassin"><div class="content"><h2>Character Assassin</h2>';
-			$extra .= '<details><summary class="button-secondary">Show ' . count( $info ) . ' unescaped strings</summary>';
+			$extra .= '<details><summary>Show ' . count( $info ) . ' unescaped strings</summary>';
 			$extra .= '<ul>';
 
 			foreach ( $info as $key => $data ) {
