@@ -36,6 +36,8 @@ class CharacterAssassin {
 		add_filter( 'attribute_escape', array( $this, 'tw_esc_attr' ), 10, 2 );
 		add_filter( 'clean_url', array( $this, 'tw_esc_html' ), 10, 2 );
 
+		wp_enqueue_style('character-assassin', plugins_url( '/character-assassin.css', __FILE__), array(), '0.1.0', 'all');
+
 		ob_start( array( $this, 'tw_ca_footer') );
 	}
 
@@ -152,7 +154,10 @@ class CharacterAssassin {
 
 		$extra = '';
 		if ( $info ) {
-			$extra = '<div id="character-assassin" style="position:absolute;left:0;top:6em;width:50%;margin-left:25%;background-color:#ccc;opacity:0.9;"><h2>Character Assassin</h2><h3>Unescaped strings</h3><ul>';
+			$extra = '<div id="character-assassin"><h2>Character Assassin</h2>';
+			$extra .= '<details><summary class="button-secondary">Show ' . count( $info ) . ' unescaped strings</summary>';
+			$extra .= '<ul>';
+
 			foreach ( $info as $key => $data ) {
 				$extra .= '<li><code>' . esc_html( $data['param'] ) .
 				'</code> - <code>' .
@@ -163,7 +168,7 @@ class CharacterAssassin {
 				esc_html( $data['frame']['function'] ) .
 				'()</code></li>';
 			}
-			$extra .= '</ul>';
+			$extra .= '</ul></details>';
 			$extra .= '<p>Items identified: ' . count( $this->tw_heap ) . '<br/>';
 			$extra .= 'Safe items: ' . count( $this->tw_heap ) - count( $info ) . '<br/>';
 			$extra .= 'Unescaped items: ' . count( $info ) . '</p>';

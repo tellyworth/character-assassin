@@ -1,0 +1,35 @@
+#character-assassin {
+	position:absolute;
+	left:0;
+	top:6em;width:50%;
+	margin-left:25%;
+	padding: 1em;
+	background-color:#eed;
+	opacity:0.9;
+	z-index:1000;
+}
+
+#character-assassin:hover {
+	opacity:0.95;
+}
+
+details {
+	border: 1px solid #aaa;
+	border-radius: 4px;
+	padding: 0.5em 0.5em 0;
+  }
+
+  summary {
+	font-weight: bold;
+	margin: -0.5em -0.5em 0;
+	padding: 0.5em;
+  }
+
+  details[open] {
+	padding: 0.5em;
+  }
+
+  details[open] summary {
+	border-bottom: 1px solid #aaa;
+	margin-bottom: 0.5em;
+  }
