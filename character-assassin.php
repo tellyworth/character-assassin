@@ -36,6 +36,8 @@ class CharacterAssassin {
 		add_filter( 'attribute_escape', array( $this, 'tw_esc_attr' ), 10, 2 );
 		add_filter( 'clean_url', array( $this, 'tw_esc_html' ), 10, 2 );
 
+		add_filter( 'pre_kses', array( $this, 'tw_ca_pre_kses' ), 10, 3);
+
 		wp_enqueue_style('character-assassin', plugins_url( '/character-assassin.css', __FILE__), array(), '0.1.0', 'all');
 
 		ob_start( array( $this, 'tw_ca_footer') );
@@ -141,6 +143,24 @@ class CharacterAssassin {
 
 		$safe_text = $this->tw_esc_html( $safe_text, $text );
 		return $safe_text;
+	}
+
+	function tw_ca_pre_kses( $content, $html, $context ) {
+		if ( strpos( $content, TW_CA_BAD_CHARACTERS ) === false ) {
+			return $content;
+		}
+
+		$id = null;
+		$found = preg_match( '#(?:' . preg_quote(TW_CA_BAD_CHARACTERS) . ')?(\w+)' . preg_quote(TW_CA_BAD_CHARACTERS) . '#', $content, $match );
+		if ( $found ) {
+			$id = $match[1];
+		}
+
+		// Replace the ID with the original string. We can let kses itself strip off the bad characters.
+		if ( $id && isset( $this->tw_heap[ $id ] ) ) {
+			$content = str_replace( $id, $this->tw_heap[ $id ]['param'], $content );
+		}
+		return $content;
 	}
 
 	function tw_ca_footer( $content ) {
