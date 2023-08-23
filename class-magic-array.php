@@ -6,25 +6,11 @@ namespace CharacterAssassin;
 
 class MagicArray implements \ArrayAccess {
 	private $data = [];
+	private $callback = null;
 
-	public function __construct( $data ) {
+	public function __construct( $data, $callback = null ) {
 		$this->data = $data;
-	}
-
-	public function __set( $name, $value ) {
-		$this->data[$name] = $value;
-	}
-
-	public function &__get( $name ) {
-		return $this->data[$key];
-	}
-
-	public function __isset ($key) {
-		return isset($this->data[$key]);
-	}
-
-	public function __unset ($key) {
-		unset($this->data[$key]);
+		$this->callback = $callback;
 	}
 
 	public function offsetSet($offset,$value) {
@@ -46,6 +32,9 @@ class MagicArray implements \ArrayAccess {
 	}
 
 	public function offsetGet($offset) {
+		if ( isset( $this->data[$offset] ) && is_callable( $this->callback ) ) {
+			return call_user_func( $this->callback, $this->data[$offset] );
+		}
 		return $this->offsetExists($offset) ? $this->data[$offset] : null;
 	}
 }
