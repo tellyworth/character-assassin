@@ -38,8 +38,7 @@ class CharacterAssassin {
 		// Special escaping filter to reverse placeholders
 		add_filter( 'esc_html', array( $this, 'tw_esc_html' ), 10, 2 );
 		add_filter( 'attribute_escape', array( $this, 'tw_esc_attr' ), 10, 2 );
-		add_filter( 'clean_url', array( $this, 'tw_esc_html' ), 10, 2 );
-
+		add_filter( 'clean_url', array( $this, 'tw_esc_url' ), 10, 2 );
 		add_filter( 'pre_kses', array( $this, 'tw_ca_pre_kses' ), 10, 3);
 
 		wp_enqueue_style('character-assassin', plugins_url( '/character-assassin.css', __FILE__), array(), '0.1.0', 'all');
@@ -51,10 +50,14 @@ class CharacterAssassin {
 	}
 
 	function tw_ca_mock_superglobals() {
-		$_GET = new MagicArray( $_GET );
-		$_POST = new MagicArray( $_POST );
-		$_REQUEST = new MagicArray( $_REQUEST );
-		$_COOKIE = new MagicArray( $_COOKIE );
+		$_GET = new MagicArray( $_GET, array( $this, 'tw_ca_mangle_superglobal' ) );
+		$_POST = new MagicArray( $_POST, array( $this, 'tw_ca_mangle_superglobal' ) );
+		$_REQUEST = new MagicArray( $_REQUEST, array( $this, 'tw_ca_mangle_superglobal' ) );
+	}
+
+	function tw_ca_mangle_superglobal( $param ) {
+		$unique = $this->tw_ca_push_to_heap( $param );
+		return TW_CA_BAD_CHARACTERS . $unique . TW_CA_BAD_CHARACTERS;
 	}
 
 	/**
@@ -62,7 +65,7 @@ class CharacterAssassin {
 	 */
 	function tw_ca_push_to_heap( $param ) {
 		$bt = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 10);
-		$ignore_funcs = [ __FUNCTION__, 'tw_ca_mangle', 'tw_ca_mangle_tail', 'tw_ca_mangle_head', 'tw_ca_mangle_gettext', 'apply_filters', 'translate', '__' ];
+		$ignore_funcs = [ __FUNCTION__, 'tw_ca_mangle', 'tw_ca_mangle_tail', 'tw_ca_mangle_head', 'tw_ca_mangle_gettext', 'tw_ca_mangle_superglobal', 'apply_filters', 'translate', '__', 'call_user_func' ];
 		$found_frame = null;
 		foreach ( $bt as $frame_i => $frame ) {
 			if ( isset( $frame['file'] )
@@ -98,6 +101,7 @@ class CharacterAssassin {
 			'param' => $param,
 			'param_key' => $param_key,
 			'frame' => $found_frame,
+#			'bt' => $bt,
 		];
 
 		return $unique;
@@ -159,6 +163,24 @@ class CharacterAssassin {
 		return $safe_text;
 	}
 
+	function tw_esc_url( $safe_text, $text ) {
+		$found = false;
+		$id = null;
+
+		// The URL might have been escaped already, so we need to look for the escaped version of the bad characters.
+		$delim = preg_quote( TW_CA_BAD_CHARACTERS ) . '|' . preg_quote( urlencode( TW_CA_BAD_CHARACTERS ) );
+
+		$found = preg_match( '#(?:' . $delim . ')?(\w+)(?:' . $delim . ')#', $text, $match );
+		if ( $found ) {
+			$id = $match[1];
+		}
+
+		if ( $id && isset( $this->tw_heap[ $id ] ) ) {
+			$safe_text = preg_replace( '#(?:' . $delim . ')' . preg_quote( $id ) . '(?:' . $delim . ')#', urlencode( $this->tw_heap[ $id ]['param'] ), $text );
+		}
+		return $safe_text;
+	}
+
 	function tw_ca_pre_kses( $content, $html, $context ) {
 		if ( strpos( $content, TW_CA_BAD_CHARACTERS ) === false ) {
 			return $content;
@@ -175,6 +197,14 @@ class CharacterAssassin {
 			$content = str_replace( $id, $this->tw_heap[ $id ]['param'], $content );
 		}
 		return $content;
+	}
+
+	function tw_ca_trim_abspath( $path ) {
+		$abspath = realpath( ABSPATH );
+		if ( 0 === strpos( $path, $abspath ) ) {
+			$path = substr( $path, strlen( $abspath ) );
+		}
+		return $path;
 	}
 
 	function tw_ca_footer( $content ) {
@@ -195,7 +225,7 @@ class CharacterAssassin {
 			foreach ( $info as $key => $data ) {
 				$extra .= '<li><code>' . esc_html( $data['param'] ) .
 				'</code> - <code>' .
-				esc_html( $data['frame']['file'] ) .
+				esc_html( $this->tw_ca_trim_abspath( $data['frame']['file'] ) ) .
 				'</code> line ' .
 				esc_html( $data['frame']['line'] ) .
 				' in function <code>' .
