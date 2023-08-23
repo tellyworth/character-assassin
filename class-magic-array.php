@@ -4,7 +4,7 @@ namespace CharacterAssassin;
 // Class that implements a magic array to mock $_GET and other superglobals.
 // This essentially implements an object that imitates an array.
 
-class MagicArray implements \ArrayAccess {
+class MagicArray implements \ArrayAccess, \Countable {
 	private $data = [];
 	private $callback = null;
 
@@ -36,5 +36,9 @@ class MagicArray implements \ArrayAccess {
 			return call_user_func( $this->callback, $this->data[$offset] );
 		}
 		return $this->offsetExists($offset) ? $this->data[$offset] : null;
+	}
+
+	public function count() {
+		return count( $this->data );
 	}
 }
