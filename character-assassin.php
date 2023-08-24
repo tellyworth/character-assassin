@@ -47,9 +47,25 @@ class CharacterAssassin {
 		add_action( 'sanitize_comment_cookies', array( $this, 'tw_ca_mock_superglobals' ) );
 
 		ob_start( array( $this, 'tw_ca_footer') );
+
+		add_action( 'sanitize_comment_cookies', array( $this, 'tw_ca_mock_wpdb' ) );
+	}
+
+	function tw_ca_mock_wpdb() {
+		// Don't try this at home, kids.
+		if ( class_exists( 'WP_SQLite_DB') && 'WP_SQLite_DB' === get_class( $GLOBALS['wpdb'] ) ) {
+			require_once( __DIR__ . '/class-db-override.php' );
+			$GLOBALS['wpdb'] = new DB_Override( DB_USER, DB_PASSWORD, DB_NAME, DB_HOST );
+			$GLOBALS['wpdb']->tw_ca_set_callback( array( $this, 'tw_ca_real_escape' ) );
+			wp_set_wpdb_vars();
+		}
 	}
 
 	function tw_ca_mock_superglobals() {
+		global $pagenow;
+		if ( is_login() || wp_doing_ajax() || 'plugins.php' === $pagenow ) {
+			return;
+		}
 		$_GET = new MagicArray( $_GET, array( $this, 'tw_ca_mangle_superglobal' ) );
 		$_POST = new MagicArray( $_POST, array( $this, 'tw_ca_mangle_superglobal' ) );
 		$_REQUEST = new MagicArray( $_REQUEST, array( $this, 'tw_ca_mangle_superglobal' ) );
@@ -128,6 +144,24 @@ class CharacterAssassin {
 	function tw_ca_mangle_tail( $param ) {
 		$unique = $this->tw_ca_push_to_heap( $param );
 		return $unique . TW_CA_BAD_CHARACTERS;
+	}
+
+	function tw_esc_replace_placeholders( $text, $strip_bad_chars = false ) {
+
+		foreach ( array_keys( $this->tw_heap ) as $id ) {
+			$text = str_replace( $id, $this->tw_heap[ $id ]['param'], $text );
+		}
+
+		if ( $strip_bad_chars ) {
+			$text = str_replace( TW_CA_BAD_CHARACTERS, '', $text );
+		}
+
+		return $text;
+	}
+
+	function tw_ca_real_escape( $data ) {
+		$data = $this->tw_esc_replace_placeholders( $data );
+		return $data;
 	}
 
 	// apply_filters( 'esc_html', $safe_text, $text );
@@ -217,8 +251,8 @@ class CharacterAssassin {
 		}
 
 		$extra = '';
+		$extra = '<div id="character-assassin"><div class="content"><h2>Character Assassin</h2>';
 		if ( $info ) {
-			$extra = '<div id="character-assassin"><div class="content"><h2>Character Assassin</h2>';
 			$extra .= '<details><summary>Show ' . count( $info ) . ' unescaped strings</summary>';
 			$extra .= '<ul>';
 
@@ -233,9 +267,14 @@ class CharacterAssassin {
 				'()</code></li>';
 			}
 			$extra .= '</ul></details>';
-			$extra .= '<p>Found <b>' . count( $info ) . ' unescaped</b> and '. count( $this->tw_heap ) - count( $info ) . ' escaped items.</p>';
-			$extra .= '</div></div>';
 		}
+		$extra .= '<p>Found <b>' . count( $info ) . ' unescaped</b> and '. count( $this->tw_heap ) - count( $info ) . ' escaped items.</p>';
+		global $wpdb;
+		$extra .= '<pre>';
+		$extra .= var_export( $wpdb->queries_to_check, true );
+		$extra .= '</pre>';
+
+		$extra .= '</div></div>';
 
 		return $content . $extra;
 	}
