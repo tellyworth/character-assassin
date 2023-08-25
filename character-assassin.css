@@ -1,0 +1,47 @@
+#character-assassin {
+	position:absolute;
+	left:0;
+	top:6em;width:50%;
+	margin: 0 25%;
+	padding: 0;
+	background-image: linear-gradient(45deg, #474747 25%, #ffcc00 25%, #ffcc00 50%, #474747 50%, #474747 75%, #ffcc00 75%, #ffcc00 100%);
+	background-size: 60.00px 60.00px;
+	opacity:0.5;
+	z-index:1000;
+}
+
+#character-assassin:hover {
+	opacity:0.95;
+}
+
+#character-assassin .content {
+	background-color: #eee;
+	margin: 1em;
+	padding: 1em;
+}
+
+#character-assassin h2 {
+	margin: 4px auto 8px;
+	text-align: center;
+}
+
+details {
+	border: 1px solid #aaa;
+	border-radius: 4px;
+	padding: 0.5em 0.5em 0;
+  }
+
+  summary {
+	font-weight: bold;
+	margin: -0.5em -0.5em 0;
+	padding: 0.5em;
+  }
+
+  details[open] {
+	padding: 0.5em;
+  }
+
+  details[open] summary {
+	border-bottom: 1px solid #aaa;
+	margin-bottom: 0.5em;
+  }
