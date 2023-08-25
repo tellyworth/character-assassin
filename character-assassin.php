@@ -181,7 +181,7 @@ class CharacterAssassin {
 
 
 	function tw_ca_real_escape( $data ) {
-		$data = $this->tw_esc_replace_placeholders( $data );
+		$data = $this->tw_esc_replace_placeholders( $data, TW_CA_BAD_CHARACTERS );
 		return $data;
 	}
 

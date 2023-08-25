@@ -38,9 +38,15 @@ class Admin {
 		printf( "Unescaped home url: %s\n", home_url() );
 		printf( "Correctly escaped home url: %s\n", esc_url( home_url() ) );
 
-		echo home_url() . "\n";
+		$_GET['foo'] = 'bar';
+		printf( "Unescaped GET: %s\n", $_GET['foo'] );
+		printf( "Correctly escaped GET: %s\n", esc_html( $_GET['foo'] ) );
+		printf( "Attribute escaped GET: %s\n", esc_attr( $_GET['foo'] ) );
 
-		var_dump( parse_url( home_url() ) );
+		global $wpdb;
+
+		echo $wpdb->prepare( "SELECT * FROM {$wpdb->posts} WHERE post_title = '%s'", 'foo' ) . "\n";
+		echo $wpdb->prepare( "SELECT * FROM {$wpdb->posts} WHERE post_title = '%s'", $_GET['foo'] ) . "\n";
 
 		echo '</pre>';
 	}
