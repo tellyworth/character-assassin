@@ -1,0 +1,47 @@
+<?php
+namespace CharacterAssassin;
+
+class Admin {
+	public static function instance() {
+		static $instance = null;
+
+		return ! is_null( $instance ) ? $instance : $instance = new self();
+	}
+
+	/**
+	 * Constructor.
+	 */
+	private function __construct() {
+		add_action( 'admin_menu', array( $this, 'add_to_menu' ) );
+	}
+
+	public function add_to_menu() {
+		$hook = add_submenu_page(
+			'tools.php',
+			esc_html__( 'Character Assassin', 'wporg-plugins' ),
+			esc_html__( 'Character Assassin', 'wporg-plugins' ),
+			'manage_options',
+			'character-assassin',
+			array( $this, 'show_self_test' )
+		);
+	}
+
+	public function show_self_test() {
+		var_dump( __METHOD__ );
+
+		echo '<pre>';
+
+		echo __( 'Unescaped translation string', 'character-assassin' ) . "\n";
+		echo __( 'Unescaped translation string (default domain)' ) . "\n";
+		echo esc_html__( 'Correctly escaped translation string', 'character-assassin' ) . "\n";
+
+		printf( "Unescaped home url: %s\n", home_url() );
+		printf( "Correctly escaped home url: %s\n", esc_url( home_url() ) );
+
+		echo home_url() . "\n";
+
+		var_dump( parse_url( home_url() ) );
+
+		echo '</pre>';
+	}
+}
