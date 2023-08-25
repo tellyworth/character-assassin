@@ -40,6 +40,7 @@ class CharacterAssassin {
 		add_filter( 'attribute_escape', array( $this, 'tw_esc_attr' ), 10, 2 );
 		add_filter( 'clean_url', array( $this, 'tw_esc_url' ), 10, 2 );
 		add_filter( 'pre_kses', array( $this, 'tw_ca_pre_kses' ), 10, 3);
+		add_filter( 'sanitize_text_field', array( $this, 'tw_ca_sanitize_text_field' ), 10, 2 );
 
 		wp_enqueue_style('character-assassin', plugins_url( '/character-assassin.css', __FILE__), array(), '0.1.0', 'all');
 
@@ -124,7 +125,6 @@ class CharacterAssassin {
 			'param' => $param,
 			'param_key' => $param_key,
 			'frame' => $found_frame,
-#			'bt' => $bt,
 		];
 
 		return $unique;
@@ -258,6 +258,17 @@ class CharacterAssassin {
 		return $content;
 	}
 
+	function tw_ca_sanitize_text_field( $filtered, $unfiltered ) {
+		// sanitize_text_field is a special case. For one, it strips out our entire string because it looks like a tag even though it isn't.
+		// Also, it's used in a mix of places - sometimes incorrectly as a substitute for html/sql escaping; sometimes correctly in logical checks.
+
+		// What we'll do here is restore the original string and strip the bad characters, but keep the placeholder intact.
+		if ( strpos( $unfiltered, TW_CA_BAD_CHARACTERS ) === false ) {
+			return $filtered;
+		}
+		return $text = str_replace( TW_CA_BAD_CHARACTERS, '', $unfiltered );
+	}
+
 	function tw_ca_trim_abspath( $path ) {
 		$abspath = realpath( ABSPATH );
 		if ( 0 === strpos( $path, $abspath ) ) {
@@ -282,22 +293,48 @@ class CharacterAssassin {
 			$extra .= '<ul>';
 
 			foreach ( $info as $key => $data ) {
-				$extra .= '<li><code>' . esc_html( $data['param'] ) .
-				'</code> - <code>' .
+				$extra .= '<li><code>' .
+				esc_html( $data['frame']['function'] ) .
+				'( \'' . esc_html( $data['param'] ) . '\' )' .
+				'</code><br/><code>' .
 				esc_html( $this->tw_ca_trim_abspath( $data['frame']['file'] ) ) .
 				'</code> line ' .
 				esc_html( $data['frame']['line'] ) .
-				' in function <code>' .
-				esc_html( $data['frame']['function'] ) .
-				'()</code></li>';
+				'</code></li>';
 			}
 			$extra .= '</ul></details>';
 		}
-		$extra .= '<p>Found <b>' . count( $info ) . ' unescaped</b> and '. count( $this->tw_heap ) - count( $info ) . ' escaped items.</p>';
+
 		global $wpdb;
-		$extra .= '<pre>';
-		$extra .= var_export( $wpdb->queries_to_check, true );
-		$extra .= '</pre>';
+		$queries = [];
+		foreach ( $wpdb->queries_to_check as $query ) {
+			foreach ( $this->tw_heap as $key => $data ) {
+				if ( false !== strpos( $query, $key ) ) {
+					$data['query'] = $query;
+					$queries[ $key ] = $data;
+				}
+			}
+		}
+		if ( $queries ) {
+			$extra .= '<details><summary>Show ' . count( $queries ) . ' unescaped SQL queries</summary>';
+			$extra .= '<ul>';
+
+			foreach ( $queries as $key => $data ) {
+				#$extra .= var_export( $data, true );
+				$_query = str_replace( TW_CA_BAD_CHARACTERS, '', $data['query'] );
+				$_query = esc_html( $_query );
+				$_query = str_replace( $key, '<em style="color:red">' . $data['param'] . '</em>', $data['query'] );
+				$extra .= '<li><code>' . $_query .
+				'</code><br/><code>' .
+				esc_html( $this->tw_ca_trim_abspath( $data['frame']['file'] ) ) .
+				'</code> line ' .
+				esc_html( $data['frame']['line'] ) .
+				'</li>';
+			}
+			$extra .= '</ul></details>';
+		}
+
+		$extra .= '<p>Found <b>' . count( $info ) . ' unescaped</b> and '. count( $this->tw_heap ) - count( $info ) . ' escaped items.</p>';
 
 		$extra .= '</div></div>';
 

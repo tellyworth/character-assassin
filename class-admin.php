@@ -47,6 +47,10 @@ class Admin {
 
 		echo $wpdb->prepare( "SELECT * FROM {$wpdb->posts} WHERE post_title = '%s'", 'foo' ) . "\n";
 		echo $wpdb->prepare( "SELECT * FROM {$wpdb->posts} WHERE post_title = '%s'", $_GET['foo'] ) . "\n";
+		$wpdb->query( $wpdb->prepare( "SELECT * FROM {$wpdb->posts} WHERE post_title = '%s'", $_GET['foo'] ) ); // Fine
+		$wpdb->query( "SELECT * FROM {$wpdb->posts} WHERE post_title = '" . $_GET['foo'] . "'" ); // Bad
+		$wpdb->query( "SELECT * FROM {$wpdb->posts} WHERE post_title = '" . esc_url( $_GET['foo'] ) . "'" ); // Ok
+		$wpdb->query( "SELECT * FROM {$wpdb->posts} WHERE post_title = '" . sanitize_text_field( $_GET['foo'] ) . "'" ); // Bad
 
 		echo '</pre>';
 	}

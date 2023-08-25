@@ -22,10 +22,9 @@ class DB_Override extends \WP_SQLite_DB {
 	}
 
 	public function query( $query ) {
-		// Log any queries that look like they contain unescaped strings.
-		if ( false !== strpos( $query, TW_CA_BAD_CHARACTERS) ) {
-			$this->queries_to_check[] = $query;
-		}
+		// Log all queries so we can check them later.
+		// TODO: limit to queries that are likely to contain user input.
+		$this->queries_to_check[] = $query;
 		return parent::query( $query );
 	}
 
