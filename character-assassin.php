@@ -25,7 +25,7 @@ class CharacterAssassin {
 	 */
 	public function tw_ca_init() {
 		// We can't force-filter get_bloginfo() because of its $raw parameter, so filter its data sources instead.
-		#add_filter( 'home_url', 'tw_ca_mangle_tail' );
+		add_filter( 'home_url', array( $this, 'tw_ca_mangle_tail' ) );
 		add_filter( 'option_blogdescription', array( $this, 'tw_ca_mangle' ) );
 		add_filter( 'option_admin_email', array( $this, 'tw_ca_mangle' ) );
 		#add_filter( 'option_blog_charset', 'tw_ca_mangle' );
@@ -49,6 +49,13 @@ class CharacterAssassin {
 		ob_start( array( $this, 'tw_ca_footer') );
 
 		add_action( 'sanitize_comment_cookies', array( $this, 'tw_ca_mock_wpdb' ) );
+
+		// Load this early so we can use the menu hooks.
+		if ( defined( 'WP_ADMIN' ) && WP_ADMIN ) {
+			require_once( __DIR__ . '/class-admin.php' );
+			Admin::instance();
+		}
+
 	}
 
 	function tw_ca_mock_wpdb() {
@@ -62,10 +69,10 @@ class CharacterAssassin {
 	}
 
 	function tw_ca_mock_superglobals() {
-		global $pagenow;
-		if ( is_login() || wp_doing_ajax() || 'plugins.php' === $pagenow ) {
-			return;
-		}
+		#global $pagenow;
+		#if ( is_login() || wp_doing_ajax() || 'plugins.php' === $pagenow || 'admin.php' === $pagenow ) {
+		#	return;
+		#}
 		$_GET = new MagicArray( $_GET, array( $this, 'tw_ca_mangle_superglobal' ) );
 		$_POST = new MagicArray( $_POST, array( $this, 'tw_ca_mangle_superglobal' ) );
 		$_REQUEST = new MagicArray( $_REQUEST, array( $this, 'tw_ca_mangle_superglobal' ) );
@@ -143,21 +150,35 @@ class CharacterAssassin {
 	 */
 	function tw_ca_mangle_tail( $param ) {
 		$unique = $this->tw_ca_push_to_heap( $param );
-		return $unique . TW_CA_BAD_CHARACTERS;
+		return $param . '/' . TW_CA_BAD_CHARACTERS . $unique . TW_CA_BAD_CHARACTERS;
 	}
 
-	function tw_esc_replace_placeholders( $text, $strip_bad_chars = false ) {
+	function tw_esc_replace_placeholders( $text, $strip_bad_chars = null ) {
 
 		foreach ( array_keys( $this->tw_heap ) as $id ) {
 			$text = str_replace( $id, $this->tw_heap[ $id ]['param'], $text );
 		}
 
-		if ( $strip_bad_chars ) {
-			$text = str_replace( TW_CA_BAD_CHARACTERS, '', $text );
+		if ( $strip_bad_chars && is_string( $strip_bad_chars ) || is_array( $strip_bad_chars ) ) {
+			$text = str_replace( $strip_bad_chars, '', $text );
 		}
 
 		return $text;
 	}
+
+	function tw_esc_replace_trailing_placeholders( $text, $strip_bad_chars = null ) {
+
+		foreach ( array_keys( $this->tw_heap ) as $id ) {
+			$text = str_replace( $id, '', $text );
+		}
+
+		if ( $strip_bad_chars && is_string( $strip_bad_chars ) || is_array( $strip_bad_chars ) ) {
+			$text = str_replace( $strip_bad_chars, '', $text );
+		}
+
+		return $text;
+	}
+
 
 	function tw_ca_real_escape( $data ) {
 		$data = $this->tw_esc_replace_placeholders( $data );
@@ -198,13 +219,14 @@ class CharacterAssassin {
 	}
 
 	function tw_esc_url( $safe_text, $text ) {
+		/*
 		$found = false;
 		$id = null;
 
 		// The URL might have been escaped already, so we need to look for the escaped version of the bad characters.
 		$delim = preg_quote( TW_CA_BAD_CHARACTERS ) . '|' . preg_quote( urlencode( TW_CA_BAD_CHARACTERS ) );
 
-		$found = preg_match( '#(?:' . $delim . ')?(\w+)(?:' . $delim . ')#', $text, $match );
+		$found = preg_match( '#(?:' . $delim . ')?(\w+)(?:' . $delim . ')?#', $text, $match );
 		if ( $found ) {
 			$id = $match[1];
 		}
@@ -212,6 +234,9 @@ class CharacterAssassin {
 		if ( $id && isset( $this->tw_heap[ $id ] ) ) {
 			$safe_text = preg_replace( '#(?:' . $delim . ')' . preg_quote( $id ) . '(?:' . $delim . ')#', urlencode( $this->tw_heap[ $id ]['param'] ), $text );
 		}
+		*/
+
+		$safe_text = $this->tw_esc_replace_trailing_placeholders( $text, [ '/' . TW_CA_BAD_CHARACTERS, TW_CA_BAD_CHARACTERS ] );
 		return $safe_text;
 	}
 

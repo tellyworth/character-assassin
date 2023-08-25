@@ -8,6 +8,20 @@ class MagicArray implements \ArrayAccess, \Countable {
 	private $data = [];
 	private $callback = null;
 
+	private function should_mangle( $name ) {
+		// Don't interfere with logins
+		if ( is_login() ) {
+			return false;
+		}
+		if ( is_admin() ) {
+			// Don't mess with values that are needed for menus and cap checks to work correctly.
+			if ( in_array( $name, [ 'page', 'plugin', 'action', '_wpnonce' ] ) ) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	public function __construct( $data, $callback = null ) {
 		$this->data = $data;
 		$this->callback = $callback;
@@ -33,7 +47,9 @@ class MagicArray implements \ArrayAccess, \Countable {
 
 	public function offsetGet($offset) {
 		if ( isset( $this->data[$offset] ) && is_callable( $this->callback ) ) {
-			return call_user_func( $this->callback, $this->data[$offset] );
+			if ( $this->should_mangle( $offset ) ) {
+				return call_user_func( $this->callback, $this->data[$offset] );
+			}
 		}
 		return $this->offsetExists($offset) ? $this->data[$offset] : null;
 	}
