@@ -89,7 +89,6 @@ class CharacterAssassin {
 	 */
 	function tw_ca_push_to_heap( $param ) {
 		$bt = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 10);
-		$ignore_funcs = [ __FUNCTION__, 'tw_ca_mangle', 'tw_ca_mangle_tail', 'tw_ca_mangle_head', 'tw_ca_mangle_gettext', 'tw_ca_mangle_superglobal', 'apply_filters', 'translate', '__', 'call_user_func' ];
 		$found_frame = null;
 		foreach ( $bt as $frame_i => $frame ) {
 			if ( isset( $frame['file'] )
@@ -101,9 +100,27 @@ class CharacterAssassin {
 			}
 		}
 		if ( !$found_frame ) {
+			$ignore_funcs = [
+				__FUNCTION__,
+				'tw_ca_mangle',
+				'tw_ca_mangle_tail',
+				'tw_ca_mangle_head',
+				'tw_ca_mangle_gettext',
+				'tw_ca_mangle_superglobal',
+				'apply_filters',
+				'translate',
+				'__',
+				'call_user_func',
+			];
+			$ignore_files = [
+				ABSPATH . 'wp-includes/link-template.php', // Ignore functions like get_home_url(), we want to go deeper
+			];
 			// If we didn't find a frame in a plugin or theme, look for the first frame that isn't in our ignore list
 			foreach ( $bt as $frame_i => $frame ) {
-				if ( isset( $frame['function'] ) && !in_array( $frame['function'], $ignore_funcs ) ) {
+				if ( isset( $frame['function'] ) &&
+					!in_array( $frame['function'], $ignore_funcs ) &&
+					!in_array( $frame['file'], $ignore_files )
+					) {
 
 					$found_frame = $frame;
 					break;
