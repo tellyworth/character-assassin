@@ -5,7 +5,7 @@ Plugin Name: Character Assassin
 Description: A plugin for torture testing WordPress themes. DO NOT USE ON A PRODUCTION SITE.
 Author: Alex Shiels
 Author URI: https://flightpath.blog/
-Version: 0.1
+Version: 0.2
 */
 
 require_once( __DIR__ . '/class-magic-array.php' );
